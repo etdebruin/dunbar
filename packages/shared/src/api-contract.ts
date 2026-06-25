@@ -35,3 +35,17 @@ export const routes = {
   // feed
   feed: `${API_PREFIX}/feed`,
 } as const;
+
+/**
+ * Route patterns with `:param` placeholders, for server-side registration.
+ * (The {@link routes} builders URL-encode their arguments, so they can't be
+ * used to register parameterized routes.)
+ */
+export const patterns = {
+  user: `${API_PREFIX}/users/:username`,
+  userPosts: `${API_PREFIX}/users/:username/posts`,
+  userFollowing: `${API_PREFIX}/users/:username/following`,
+  userFollowers: `${API_PREFIX}/users/:username/followers`,
+  post: `${API_PREFIX}/posts/:id`,
+  unfollow: `${API_PREFIX}/follows/:username`,
+} as const;

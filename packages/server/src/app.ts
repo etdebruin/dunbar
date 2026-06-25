@@ -7,6 +7,7 @@ import {
 import { createDb, type Db } from "./db/index.js";
 import { registerAuth } from "./plugins/auth.js";
 import { authRoutes } from "./routes/auth.js";
+import { userRoutes } from "./routes/users.js";
 import "./types.js";
 
 export interface BuildAppOptions {
@@ -32,6 +33,7 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
 
   app.get("/health", () => ({ ok: true }));
   authRoutes(app);
+  userRoutes(app);
 
   return app;
 }

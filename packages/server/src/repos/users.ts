@@ -38,6 +38,31 @@ export function findUserByUsername(
   return row ? rowToPublicUser(row) : null;
 }
 
+/** Patch a user's profile fields. Only provided keys are written. */
+export function updateUserProfile(
+  db: Db,
+  id: string,
+  patch: { displayName?: string | null; bio?: string | null },
+): PublicUser | null {
+  const sets: string[] = [];
+  const values: (string | null)[] = [];
+  if (patch.displayName !== undefined) {
+    sets.push("display_name = ?");
+    values.push(patch.displayName);
+  }
+  if (patch.bio !== undefined) {
+    sets.push("bio = ?");
+    values.push(patch.bio);
+  }
+  if (sets.length > 0) {
+    db.prepare(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`).run(
+      ...values,
+      id,
+    );
+  }
+  return findUserById(db, id);
+}
+
 export function insertUser(
   db: Db,
   user: {
