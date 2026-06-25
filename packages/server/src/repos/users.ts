@@ -74,12 +74,6 @@ export function insertUser(
 ): PublicUser {
   db.prepare(
     "INSERT INTO users (id, username, display_name, bio, created_at) VALUES (?, ?, ?, ?, ?)",
-  ).run(
-    user.id,
-    user.username,
-    user.displayName ?? null,
-    null,
-    user.createdAt,
-  );
+  ).run(user.id, user.username, user.displayName ?? null, null, user.createdAt);
   return findUserById(db, user.id)!;
 }

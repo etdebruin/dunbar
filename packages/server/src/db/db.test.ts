@@ -70,9 +70,9 @@ describe("createDb", () => {
       "INSERT INTO auth_tokens (id, user_id, token_hash, created_at) VALUES (?, ?, ?, ?)",
     ).run("t1", "u1", "hash", 1);
     db.prepare("DELETE FROM users WHERE id = ?").run("u1");
-    const count = db
-      .prepare("SELECT COUNT(*) AS n FROM auth_tokens")
-      .get() as { n: number };
+    const count = db.prepare("SELECT COUNT(*) AS n FROM auth_tokens").get() as {
+      n: number;
+    };
     expect(count.n).toBe(0);
   });
 });

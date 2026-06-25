@@ -33,9 +33,9 @@ describe("issueToken / verifyToken", () => {
     const db = createDb(":memory:");
     seedUser(db);
     const { token } = issueToken(db, "u1");
-    const stored = db
-      .prepare("SELECT token_hash FROM auth_tokens")
-      .get() as { token_hash: string };
+    const stored = db.prepare("SELECT token_hash FROM auth_tokens").get() as {
+      token_hash: string;
+    };
     expect(stored.token_hash).toBe(hashToken(token));
     expect(stored.token_hash).not.toBe(token);
   });
@@ -59,9 +59,9 @@ describe("issueToken / verifyToken", () => {
     seedUser(db);
     const { token } = issueToken(db, "u1");
     verifyToken(db, token);
-    const row = db
-      .prepare("SELECT last_used_at FROM auth_tokens")
-      .get() as { last_used_at: number | null };
+    const row = db.prepare("SELECT last_used_at FROM auth_tokens").get() as {
+      last_used_at: number | null;
+    };
     expect(row.last_used_at).not.toBe(null);
   });
 

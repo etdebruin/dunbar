@@ -8,7 +8,10 @@ export function feedRoutes(app: FastifyInstance): void {
 
   r.get(
     routes.feed,
-    { preHandler: app.requireAuth, schema: { querystring: paginationQuerySchema } },
+    {
+      preHandler: app.requireAuth,
+      schema: { querystring: paginationQuerySchema },
+    },
     (req) =>
       listFeed(app.db, req.user!.id, {
         limit: req.query.limit,

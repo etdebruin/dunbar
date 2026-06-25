@@ -79,9 +79,9 @@ export function createClient({ apiUrl, token }: ClientOptions) {
     updateProfile: (patch: UpdateProfileRequest) =>
       request<PublicUser>("PATCH", routes.me, patch),
 
-    createPost: (body: string) =>
-      request<Post>("POST", routes.posts, { body }),
-    deletePost: (id: string) => request<{ ok: true }>("DELETE", routes.post(id)),
+    createPost: (body: string) => request<Post>("POST", routes.posts, { body }),
+    deletePost: (id: string) =>
+      request<{ ok: true }>("DELETE", routes.post(id)),
     userPosts: (username: string, opts?: PageOpts) =>
       request<Paginated<Post>>("GET", routes.userPosts(username) + qs(opts)),
 

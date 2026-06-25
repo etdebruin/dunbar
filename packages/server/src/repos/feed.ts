@@ -52,15 +52,13 @@ export function listFeed(
   { limit, before }: { limit: number; before?: string | undefined },
 ): Paginated<PostWithAuthor> {
   const cursor = before ? decodeCursor(before) : null;
-  const rows = (
-    cursor !== null
-      ? db
-          .prepare(`${SELECT} WHERE p.rowid < ? ORDER BY p.rowid DESC LIMIT ?`)
-          .all(userId, cursor, limit + 1)
-      : db
-          .prepare(`${SELECT} ORDER BY p.rowid DESC LIMIT ?`)
-          .all(userId, limit + 1)
-  ) as unknown as FeedRow[];
+  const rows = (cursor !== null
+    ? db
+        .prepare(`${SELECT} WHERE p.rowid < ? ORDER BY p.rowid DESC LIMIT ?`)
+        .all(userId, cursor, limit + 1)
+    : db
+        .prepare(`${SELECT} ORDER BY p.rowid DESC LIMIT ?`)
+        .all(userId, limit + 1)) as unknown as FeedRow[];
 
   return buildPage(rows, limit, rowToPostWithAuthor);
 }

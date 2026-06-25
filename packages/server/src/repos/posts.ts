@@ -30,9 +30,9 @@ export function insertPost(
 }
 
 export function findPostById(db: Db, id: string): Post | null {
-  const row = db
-    .prepare("SELECT rowid, * FROM posts WHERE id = ?")
-    .get(id) as PostRow | undefined;
+  const row = db.prepare("SELECT rowid, * FROM posts WHERE id = ?").get(id) as
+    | PostRow
+    | undefined;
   return row ? rowToPost(row) : null;
 }
 
@@ -90,19 +90,17 @@ export function listPostsByAuthor(
   { limit, before }: PageOpts,
 ): Paginated<Post> {
   const cursor = before ? decodeCursor(before) : null;
-  const rows = (
-    cursor !== null
-      ? db
-          .prepare(
-            "SELECT rowid, * FROM posts WHERE author_id = ? AND rowid < ? ORDER BY rowid DESC LIMIT ?",
-          )
-          .all(authorId, cursor, limit + 1)
-      : db
-          .prepare(
-            "SELECT rowid, * FROM posts WHERE author_id = ? ORDER BY rowid DESC LIMIT ?",
-          )
-          .all(authorId, limit + 1)
-  ) as unknown as PostRow[];
+  const rows = (cursor !== null
+    ? db
+        .prepare(
+          "SELECT rowid, * FROM posts WHERE author_id = ? AND rowid < ? ORDER BY rowid DESC LIMIT ?",
+        )
+        .all(authorId, cursor, limit + 1)
+    : db
+        .prepare(
+          "SELECT rowid, * FROM posts WHERE author_id = ? ORDER BY rowid DESC LIMIT ?",
+        )
+        .all(authorId, limit + 1)) as unknown as PostRow[];
 
   return buildPage(rows, limit, rowToPost);
 }

@@ -25,9 +25,9 @@ export interface BuildAppOptions {
 export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
   const db = opts.db ?? createDb(process.env.DUNBAR_DB ?? ":memory:");
 
-  const app = Fastify({ logger: opts.logger ?? false }).withTypeProvider<
-    ZodTypeProvider
-  >();
+  const app = Fastify({
+    logger: opts.logger ?? false,
+  }).withTypeProvider<ZodTypeProvider>();
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 

@@ -8,9 +8,7 @@ export function isFollowing(
   followeeId: string,
 ): boolean {
   const row = db
-    .prepare(
-      "SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?",
-    )
+    .prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?")
     .get(followerId, followeeId);
   return row !== undefined;
 }

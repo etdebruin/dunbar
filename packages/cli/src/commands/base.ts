@@ -5,7 +5,11 @@ import {
   resolveApiUrl,
   writeConfig,
 } from "../lib/config.js";
-import { ApiError, createClient, type DunbarClient } from "../lib/api-client.js";
+import {
+  ApiError,
+  createClient,
+  type DunbarClient,
+} from "../lib/api-client.js";
 import { makeColors, type Colors } from "../lib/output.js";
 
 /** Shared options + helpers for every dunbar command. */
@@ -34,7 +38,10 @@ export abstract class BaseCommand extends Command {
   protected client(auth = false): DunbarClient {
     const config = this.config();
     if (auth && !config.token) {
-      throw new ApiError(401, "not logged in — run `dunbar auth register` first");
+      throw new ApiError(
+        401,
+        "not logged in — run `dunbar auth register` first",
+      );
     }
     return createClient({ apiUrl: this.apiUrl(config), token: config.token });
   }

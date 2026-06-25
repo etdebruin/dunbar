@@ -64,7 +64,9 @@ export class FollowersCommand extends BaseCommand {
       const who = this.resolveUsername(this.username);
       const users = await this.client().followers(who);
       if (this.json) return this.outJson(users);
-      this.out(formatUserList(users, this.colors(), `@${who} has no followers`));
+      this.out(
+        formatUserList(users, this.colors(), `@${who} has no followers`),
+      );
     });
   }
 }

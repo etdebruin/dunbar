@@ -40,7 +40,11 @@ describe("GET /v1/users/:username", () => {
 describe("GET /v1/me", () => {
   it("returns the authed user", async () => {
     const { app, auth } = await setup();
-    const res = await app.inject({ method: "GET", url: routes.me, headers: auth });
+    const res = await app.inject({
+      method: "GET",
+      url: routes.me,
+      headers: auth,
+    });
     expect(res.statusCode).toBe(200);
     expect(res.json().username).toBe("alice");
   });

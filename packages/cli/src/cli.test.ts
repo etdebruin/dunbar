@@ -52,7 +52,14 @@ async function run(args: string[], stdin = ""): Promise<RunResult> {
 
 /** Register and persist a token in the isolated config. */
 async function register(username: string): Promise<void> {
-  const res = await run(["auth", "register", "--username", username, "--api", apiUrl]);
+  const res = await run([
+    "auth",
+    "register",
+    "--username",
+    username,
+    "--api",
+    apiUrl,
+  ]);
   expect(res.code).toBe(0);
 }
 

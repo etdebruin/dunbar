@@ -17,8 +17,7 @@ export const routes = {
   // profile
   me: `${API_PREFIX}/me`,
   user: (username: string) => `${API_PREFIX}/users/${enc(username)}`,
-  userPosts: (username: string) =>
-    `${API_PREFIX}/users/${enc(username)}/posts`,
+  userPosts: (username: string) => `${API_PREFIX}/users/${enc(username)}/posts`,
   userFollowing: (username: string) =>
     `${API_PREFIX}/users/${enc(username)}/following`,
   userFollowers: (username: string) =>

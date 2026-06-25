@@ -21,9 +21,13 @@ export function timeAgo(ms: number, now = Date.now()): string {
 }
 
 export function formatUser(u: PublicUser, c: Colors): string {
-  const lines = [`${c.bold(`@${u.username}`)}${u.displayName ? `  ${u.displayName}` : ""}`];
+  const lines = [
+    `${c.bold(`@${u.username}`)}${u.displayName ? `  ${u.displayName}` : ""}`,
+  ];
   if (u.bio) lines.push(u.bio);
-  lines.push(c.dim(`joined ${new Date(u.createdAt).toISOString().slice(0, 10)}`));
+  lines.push(
+    c.dim(`joined ${new Date(u.createdAt).toISOString().slice(0, 10)}`),
+  );
   return lines.join("\n");
 }
 
@@ -37,7 +41,9 @@ export function formatPost(
   now = Date.now(),
 ): string {
   const who = isWithAuthor(p) ? c.bold(`@${p.author.username}`) : "";
-  const meta = c.dim(`${who ? "  " : ""}${timeAgo(p.createdAt, now)} · ${p.id.slice(0, 8)}`);
+  const meta = c.dim(
+    `${who ? "  " : ""}${timeAgo(p.createdAt, now)} · ${p.id.slice(0, 8)}`,
+  );
   return `${who}${meta}\n${p.body}`;
 }
 
@@ -51,9 +57,16 @@ export function formatPosts(
   return posts.map((p) => formatPost(p, c, now)).join("\n\n");
 }
 
-export function formatUserList(users: PublicUser[], c: Colors, empty: string): string {
+export function formatUserList(
+  users: PublicUser[],
+  c: Colors,
+  empty: string,
+): string {
   if (users.length === 0) return c.dim(empty);
   return users
-    .map((u) => `${c.bold(`@${u.username}`)}${u.displayName ? `  ${u.displayName}` : ""}`)
+    .map(
+      (u) =>
+        `${c.bold(`@${u.username}`)}${u.displayName ? `  ${u.displayName}` : ""}`,
+    )
     .join("\n");
 }

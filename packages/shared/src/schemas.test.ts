@@ -24,12 +24,9 @@ describe("usernameSchema", () => {
     },
   );
 
-  it.each(["abc", "a_b_c", "user123", "a".repeat(20)])(
-    "accepts %j",
-    (ok) => {
-      expect(usernameSchema.safeParse(ok).success).toBe(true);
-    },
-  );
+  it.each(["abc", "a_b_c", "user123", "a".repeat(20)])("accepts %j", (ok) => {
+    expect(usernameSchema.safeParse(ok).success).toBe(true);
+  });
 });
 
 describe("postBodySchema", () => {
