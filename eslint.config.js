@@ -21,4 +21,11 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Tests favor brevity over strict typing of inject() payloads.
+    files: ["**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 );
