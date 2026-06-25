@@ -6,6 +6,7 @@ import {
 } from "fastify-type-provider-zod";
 import { createDb, type Db } from "./db/index.js";
 import { registerAuth } from "./plugins/auth.js";
+import { authRoutes } from "./routes/auth.js";
 import "./types.js";
 
 export interface BuildAppOptions {
@@ -30,6 +31,7 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
   registerAuth(app);
 
   app.get("/health", () => ({ ok: true }));
+  authRoutes(app);
 
   return app;
 }

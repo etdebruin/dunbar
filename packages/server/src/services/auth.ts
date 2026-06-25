@@ -63,3 +63,10 @@ export function revokeToken(db: Db, raw: string): void {
     "UPDATE auth_tokens SET revoked_at = ? WHERE token_hash = ? AND revoked_at IS NULL",
   ).run(Date.now(), hashToken(raw));
 }
+
+/** Revoke a token by its id — used by logout, which already knows the id. */
+export function revokeTokenById(db: Db, tokenId: string): void {
+  db.prepare(
+    "UPDATE auth_tokens SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL",
+  ).run(Date.now(), tokenId);
+}
