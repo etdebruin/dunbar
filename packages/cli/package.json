@@ -1,0 +1,21 @@
+{
+  "name": "@dunbar/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "dunbar": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dunbar/shared": "workspace:*",
+    "clipanion": "^4.0.0-rc.4",
+    "picocolors": "^1.1.1",
+    "zod": "^3.24.1"
+  }
+}
