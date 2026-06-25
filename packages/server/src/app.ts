@@ -1,0 +1,35 @@
+import Fastify, { type FastifyInstance } from "fastify";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  type ZodTypeProvider,
+} from "fastify-type-provider-zod";
+import { createDb, type Db } from "./db/index.js";
+import { registerAuth } from "./plugins/auth.js";
+import "./types.js";
+
+export interface BuildAppOptions {
+  db?: Db;
+  logger?: boolean;
+}
+
+/**
+ * Construct a fully-wired Fastify app. Accepts an injected db so tests can run
+ * against an in-memory database and use `app.inject()` without binding a port.
+ */
+export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
+  const db = opts.db ?? createDb(process.env.DUNBAR_DB ?? ":memory:");
+
+  const app = Fastify({ logger: opts.logger ?? false }).withTypeProvider<
+    ZodTypeProvider
+  >();
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
+  app.decorate("db", db);
+  registerAuth(app);
+
+  app.get("/health", () => ({ ok: true }));
+
+  return app;
+}
