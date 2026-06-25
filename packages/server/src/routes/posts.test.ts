@@ -61,6 +61,7 @@ describe("GET /v1/posts/:id", () => {
     const res = await app.inject({ method: "GET", url: routes.post(id) });
     expect(res.statusCode).toBe(200);
     expect(res.json().body).toBe("hi");
+    expect(res.json().author.username).toBe("alice");
   });
 
   it("404s for an unknown post", async () => {

@@ -73,6 +73,16 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/web:
+    dependencies:
+      '@dunbar/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@dunbar/server':
+        specifier: workspace:*
+        version: link:../server
+
 packages:
 
   '@esbuild/aix-ppc64@0.28.1':

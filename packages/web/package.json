@@ -1,0 +1,22 @@
+{
+  "name": "@dunbar/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "dunbar-web": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dunbar/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@dunbar/server": "workspace:*"
+  }
+}

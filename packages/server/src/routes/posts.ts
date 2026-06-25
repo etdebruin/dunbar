@@ -12,6 +12,7 @@ import { findUserByUsername } from "../repos/users.js";
 import {
   deletePost,
   findPostById,
+  findPostWithAuthorById,
   insertPost,
   listPostsByAuthor,
 } from "../repos/posts.js";
@@ -37,7 +38,7 @@ export function postRoutes(app: FastifyInstance): void {
   );
 
   r.get(patterns.post, { schema: { params: idParam } }, (req, reply) => {
-    const post = findPostById(app.db, req.params.id);
+    const post = findPostWithAuthorById(app.db, req.params.id);
     if (!post) return reply.code(404).send({ error: "post not found" });
     return post;
   });

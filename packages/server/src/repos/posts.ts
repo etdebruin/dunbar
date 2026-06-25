@@ -1,4 +1,4 @@
-import type { Paginated, Post } from "@dunbar/shared";
+import type { Paginated, Post, PostWithAuthor } from "@dunbar/shared";
 import type { Db } from "../db/index.js";
 import { decodeCursor, encodeCursor } from "../lib/cursor.js";
 
@@ -34,6 +34,42 @@ export function findPostById(db: Db, id: string): Post | null {
     .prepare("SELECT rowid, * FROM posts WHERE id = ?")
     .get(id) as PostRow | undefined;
   return row ? rowToPost(row) : null;
+}
+
+interface PostWithAuthorRow extends PostRow {
+  author__id: string;
+  author__username: string;
+  author__display_name: string | null;
+  author__bio: string | null;
+  author__created_at: number;
+}
+
+/** A single post enriched with its author, for permalinks. */
+export function findPostWithAuthorById(
+  db: Db,
+  id: string,
+): PostWithAuthor | null {
+  const row = db
+    .prepare(
+      `SELECT p.rowid AS rowid, p.id AS id, p.author_id AS author_id,
+              p.body AS body, p.created_at AS created_at,
+              u.id AS author__id, u.username AS author__username,
+              u.display_name AS author__display_name, u.bio AS author__bio,
+              u.created_at AS author__created_at
+       FROM posts p JOIN users u ON u.id = p.author_id WHERE p.id = ?`,
+    )
+    .get(id) as PostWithAuthorRow | undefined;
+  if (!row) return null;
+  return {
+    ...rowToPost(row),
+    author: {
+      id: row.author__id,
+      username: row.author__username,
+      displayName: row.author__display_name,
+      bio: row.author__bio,
+      createdAt: row.author__created_at,
+    },
+  };
 }
 
 /** Delete a post. Returns true if a row was removed. */
