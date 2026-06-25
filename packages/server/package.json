@@ -6,6 +6,10 @@
   "bin": {
     "dunbar-server": "./dist/index.js"
   },
+  "exports": {
+    "./app": "./src/app.ts",
+    "./db": "./src/db/index.ts"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
