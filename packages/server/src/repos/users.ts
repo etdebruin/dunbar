@@ -33,10 +33,9 @@ export async function findUserByUsername(
   db: Db,
   username: string,
 ): Promise<PublicUser | null> {
-  const { rows } = await db.query(
-    "SELECT * FROM users WHERE username = $1",
-    [username],
-  );
+  const { rows } = await db.query("SELECT * FROM users WHERE username = $1", [
+    username,
+  ]);
   return rows[0] ? rowToPublicUser(rows[0] as UserRow) : null;
 }
 

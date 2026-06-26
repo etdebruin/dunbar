@@ -1,0 +1,47 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Don't pile up deploys; let the latest main win.
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Lint · Typecheck · Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  deploy:
+    name: Deploy to Fly
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: fly-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy API
+        run: flyctl deploy --config fly.toml --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Deploy website
+        run: flyctl deploy --config fly.web.toml --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

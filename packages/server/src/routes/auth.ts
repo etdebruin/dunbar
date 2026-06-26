@@ -31,12 +31,8 @@ export function authRoutes(app: FastifyInstance): void {
 
   r.get(routes.whoami, { preHandler: app.requireAuth }, (req) => req.user);
 
-  r.post(
-    routes.logout,
-    { preHandler: app.requireAuth },
-    async (req, reply) => {
-      if (req.tokenId) await revokeTokenById(app.db, req.tokenId);
-      return reply.code(200).send({ ok: true });
-    },
-  );
+  r.post(routes.logout, { preHandler: app.requireAuth }, async (req, reply) => {
+    if (req.tokenId) await revokeTokenById(app.db, req.tokenId);
+    return reply.code(200).send({ ok: true });
+  });
 }

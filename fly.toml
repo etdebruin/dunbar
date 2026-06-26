@@ -1,0 +1,29 @@
+# Fly config for the dunbar API. Deploy with: fly deploy --config fly.toml
+app = "dunbar-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  # DATABASE_URL is set by `fly postgres attach` (a secret).
+  # Set DATABASE_SSL=true via `fly secrets` if your Postgres requires TLS.
+
+[deploy]
+  # Apply migrations once, with the new code, before traffic shifts.
+  release_command = "node /app/server.js migrate"
+
+[processes]
+  app = "node /app/server.js"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

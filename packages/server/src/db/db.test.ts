@@ -6,7 +6,9 @@ describe("createMemoryDb / migrate", () => {
     const db = await createMemoryDb();
     for (const t of ["users", "auth_tokens", "posts", "follows"]) {
       // throws if the table doesn't exist
-      await expect(db.query(`SELECT * FROM ${t} LIMIT 0`)).resolves.toBeTruthy();
+      await expect(
+        db.query(`SELECT * FROM ${t} LIMIT 0`),
+      ).resolves.toBeTruthy();
     }
   });
 
@@ -16,7 +18,9 @@ describe("createMemoryDb / migrate", () => {
       "INSERT INTO users (id, username, display_name, bio, created_at) VALUES ($1, $2, $3, $4, $5)",
       ["u1", "et", "Et", null, 1700000000000],
     );
-    const { rows } = await db.query("SELECT * FROM users WHERE id = $1", ["u1"]);
+    const { rows } = await db.query("SELECT * FROM users WHERE id = $1", [
+      "u1",
+    ]);
     expect(rows[0].username).toBe("et");
     expect(rows[0].display_name).toBe("Et");
     expect(rows[0].bio).toBe(null);

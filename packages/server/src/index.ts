@@ -7,6 +7,13 @@ const host = process.env.HOST ?? "0.0.0.0";
 const db = createPool();
 await migrate(db);
 
+// `node server.js migrate` — run migrations and exit (Fly release command).
+if (process.argv.includes("migrate")) {
+  console.log("dunbar: migrations applied");
+  await db.end();
+  process.exit(0);
+}
+
 const app = buildApp({ db, logger: true });
 
 try {

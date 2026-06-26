@@ -14,14 +14,15 @@ A pnpm + TypeScript monorepo (ESM throughout):
 | Package          | What it is                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------ |
 | `@dunbar/shared` | zod schemas, inferred types, and the API route contract — shared by everything so nothing drifts |
-| `@dunbar/server` | Fastify HTTP API backed by SQLite (Node's built-in `node:sqlite`)                                |
+| `@dunbar/server` | Fastify HTTP API backed by PostgreSQL (`pg`)                                                     |
 | `@dunbar/cli`    | the `dunbar` CLI (Clipanion)                                                                     |
 | `@dunbar/web`    | a tiny read-only website (`node:http`, no framework)                                             |
 
 ## Requirements
 
-- Node ≥ 22 (uses the built-in `node:sqlite`; developed on Node 26)
+- Node ≥ 22
 - pnpm
+- PostgreSQL (for running the server; tests use an in-process emulator)
 
 ## Setup
 
@@ -31,10 +32,11 @@ pnpm install
 
 ## Run it
 
-Start the API (file-backed SQLite at `data/dunbar.db` by default):
+Create a database and start the API (it migrates on boot):
 
 ```sh
-pnpm --filter @dunbar/server dev          # http://127.0.0.1:3000
+createdb dunbar
+DATABASE_URL=postgres://localhost:5432/dunbar pnpm --filter @dunbar/server dev   # :3000
 ```
 
 Use the CLI (in another shell). Point it at the API with `--api` or `$DUNBAR_API`;
@@ -86,9 +88,49 @@ pnpm format        # prettier --write
 
 ### Notes
 
-- **Storage:** Node's built-in `node:sqlite` — no native module to compile.
+- **Storage:** PostgreSQL via `pg`. Tests run against an in-process Postgres
+  emulator ([pg-mem](https://github.com/oguimbal/pg-mem)) — fast and hermetic,
+  no Docker required.
 - **Auth:** opaque bearer tokens; only the SHA-256 hash is stored. The config
   file is written `0600`.
-- **Pagination:** opaque keyset cursors over SQLite `rowid` (insertion-stable).
+- **Pagination:** opaque keyset cursors over a `BIGSERIAL seq` column
+  (insertion-stable).
 - Browser device-flow login is intentionally **not** in the MVP; the CLI is the
   primary way in.
+
+## Deploy (Fly.io)
+
+Two Fly apps share one image (`Dockerfile`): `dunbar-api` (`fly.toml`) and
+`dunbar-web` (`fly.web.toml`). The build bundles each app into one
+self-contained file with esbuild; the API migrates on boot and via Fly's
+release command.
+
+First-time setup (you run these — they need your Fly account):
+
+```sh
+fly auth login
+
+# API + database
+fly apps create dunbar-api
+fly postgres create --name dunbar-db          # or attach Managed Postgres
+fly postgres attach dunbar-db -a dunbar-api   # sets DATABASE_URL secret
+# If your Postgres requires TLS (e.g. Managed Postgres / Neon):
+#   fly secrets set DATABASE_SSL=true -a dunbar-api
+fly deploy --config fly.toml
+
+# Website (point it at the API app's public URL)
+fly apps create dunbar-web
+fly deploy --config fly.web.toml
+```
+
+Then CLI users point at `https://dunbar-api.fly.dev` and the site lives at
+`https://dunbar-web.fly.dev`.
+
+### CI/CD
+
+`.github/workflows/ci-cd.yml` runs lint + typecheck + tests on every push/PR,
+and deploys both apps to Fly on pushes to `main`. Give it a deploy token once:
+
+```sh
+fly tokens create deploy -x 999999h | gh secret set FLY_API_TOKEN
+```

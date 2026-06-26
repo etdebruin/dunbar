@@ -37,15 +37,11 @@ export function postRoutes(app: FastifyInstance): void {
     },
   );
 
-  r.get(
-    patterns.post,
-    { schema: { params: idParam } },
-    async (req, reply) => {
-      const post = await findPostWithAuthorById(app.db, req.params.id);
-      if (!post) return reply.code(404).send({ error: "post not found" });
-      return post;
-    },
-  );
+  r.get(patterns.post, { schema: { params: idParam } }, async (req, reply) => {
+    const post = await findPostWithAuthorById(app.db, req.params.id);
+    if (!post) return reply.code(404).send({ error: "post not found" });
+    return post;
+  });
 
   r.get(
     patterns.userPosts,

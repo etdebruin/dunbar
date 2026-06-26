@@ -69,7 +69,9 @@ describe("GET /v1/auth/whoami", () => {
   });
 
   it("401s without a token", async () => {
-    const res = await (await app()).inject({
+    const res = await (
+      await app()
+    ).inject({
       method: "GET",
       url: routes.whoami,
     });

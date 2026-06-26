@@ -1,0 +1,25 @@
+# Fly config for the dunbar website. Deploy with: fly deploy --config fly.web.toml
+app = "dunbar-web"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  WEB_PORT = "8080"
+  # Point the site at the public API app. Update if you rename the API app.
+  DUNBAR_API = "https://dunbar-api.fly.dev"
+
+[processes]
+  app = "node /app/web.js"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
