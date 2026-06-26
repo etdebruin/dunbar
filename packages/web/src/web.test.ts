@@ -49,6 +49,23 @@ describe("website", () => {
     expect(html).toContain("command-line-first");
   });
 
+  it("serves a join page with the CLI flow and API URL", async () => {
+    const res = await fetch(`${webUrl}/join`);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("How to join");
+    expect(html).toContain("DUNBAR_API");
+    expect(html).toContain("auth register");
+  });
+
+  it("serves an about page crediting the creator", async () => {
+    const res = await fetch(`${webUrl}/about`);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("Etienne de Bruin");
+    expect(html).toContain("Why this approach");
+  });
+
   it("renders a profile with posts", async () => {
     const res = await fetch(`${webUrl}/u/alice`);
     expect(res.status).toBe(200);

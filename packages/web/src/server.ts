@@ -1,7 +1,9 @@
 import { createServer, type Server, type ServerResponse } from "node:http";
 import { createWebApi } from "./lib/api.js";
 import {
+  renderAbout,
   renderHome,
+  renderJoin,
   renderNotFound,
   renderPost,
   renderProfile,
@@ -23,7 +25,9 @@ export function createWebServer({ apiUrl }: WebOptions): Server {
   return createServer(async (req, res) => {
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     try {
-      if (path === "/") return send(res, 200, renderHome(apiUrl));
+      if (path === "/") return send(res, 200, renderHome());
+      if (path === "/join") return send(res, 200, renderJoin(apiUrl));
+      if (path === "/about") return send(res, 200, renderAbout());
 
       const profile = path.match(/^\/u\/([^/]+)\/?$/);
       if (profile?.[1]) {

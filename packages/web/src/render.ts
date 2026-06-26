@@ -34,6 +34,9 @@ const STYLE = `
   header.site { margin-bottom: 2rem; }
   header.site a { font-weight: 700; font-size: 1.25rem; color: inherit; }
   .tagline { color: #8a8a92; font-size: .85rem; margin-top: .15rem; }
+  nav.nav { margin-top: .5rem; font-size: .9rem; }
+  nav.nav a { color: #8a8a92; }
+  nav.nav a:hover { color: inherit; }
   .profile { border: 1px solid #e2e2dc; border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; }
   .profile h1 { margin: 0; font-size: 1.4rem; }
   .handle { color: #8a8a92; font-weight: 400; }
@@ -66,6 +69,7 @@ export function layout(title: string, body: string): string {
 <header class="site">
   <a href="/">${PRODUCT_NAME}</a>
   <div class="tagline">a smaller social network · follow at most ${MAX_FOLLOWING} people</div>
+  <nav class="nav"><a href="/">home</a> · <a href="/join">join</a> · <a href="/about">about</a></nav>
 </header>
 ${body}
 <footer>${PRODUCT_NAME} — most of this happens in the terminal.</footer>
@@ -87,20 +91,30 @@ function postCard(p: Post, opts: { handle?: string } = {}): string {
 </article>`;
 }
 
-export function renderHome(apiBase: string): string {
-  const api = escapeHtml(apiBase);
+export function renderHome(): string {
   return layout(
     PRODUCT_NAME,
     `<p>${PRODUCT_NAME} is a command-line-first social network. People post, follow,
 and read their feed from the terminal. This site is just a quiet, read-only
 window onto public profiles and posts.</p>
+<p>There's no signup form — you join from your terminal.
+<a href="/join">How to join &rarr;</a></p>
+<p class="muted">Or read <a href="/about">why ${PRODUCT_NAME} works this way</a>.
+Browse public profiles at <code>/u/&lt;username&gt;</code> or a post at
+<code>/p/&lt;id&gt;</code>.</p>`,
+  );
+}
 
-<h2>How to join</h2>
+export function renderJoin(apiBase: string): string {
+  const api = escapeHtml(apiBase);
+  return layout(
+    `join · ${PRODUCT_NAME}`,
+    `<h1>How to join</h1>
 <p>There's no signup form — you join from your terminal with the
 <code>dunbar</code> CLI.</p>
 <ol class="steps">
-  <li>Get the CLI (build it from the
-    <a href="https://github.com/etdebruin/dunbar">project repo</a>: <code>pnpm install</code>).</li>
+  <li>Install the CLI:
+    <pre class="cmd">npm install -g dunbar</pre></li>
   <li>Point it at this server:
     <pre class="cmd">export DUNBAR_API=${api}</pre></li>
   <li>Claim your handle (3–20 chars, lowercase):
@@ -111,8 +125,38 @@ dunbar follow <span class="c">someone</span>
 dunbar feed</pre></li>
 </ol>
 <p class="muted">You can follow at most ${MAX_FOLLOWING} people — that's the
-whole idea. Browse public profiles at <code>/u/&lt;username&gt;</code> or a post at
-<code>/p/&lt;id&gt;</code>.</p>`,
+whole idea. The code is open source at
+<a href="https://github.com/etdebruin/dunbar">github.com/etdebruin/dunbar</a>.</p>`,
+  );
+}
+
+export function renderAbout(): string {
+  return layout(
+    `about · ${PRODUCT_NAME}`,
+    `<h1>About ${PRODUCT_NAME}</h1>
+<p>${PRODUCT_NAME} is a small, command-line-first social network, created by
+<strong>Etienne de Bruin</strong>.</p>
+
+<h2>Why this approach</h2>
+<p>Most social networks are engineered to grow without limit: infinite feeds,
+algorithmic ranking, notifications tuned to pull you back. The product goal is
+your attention, and the design follows from it.</p>
+<p>${PRODUCT_NAME} starts from the opposite premise. It's named after
+<a href="https://en.wikipedia.org/wiki/Dunbar%27s_number">Dunbar's number</a>
+— the rough cognitive limit (~150) on the number of stable relationships a
+person can maintain. So that's the cap: you can follow at most
+${MAX_FOLLOWING} people. Not a growth metric to maximize, but a ceiling on
+purpose. It keeps your feed to people you actually chose, and keeps the network
+human-scale.</p>
+<p>It's <strong>command-line-first</strong> because the terminal is calm and
+intentional. You post a thought and leave — there's no endless scroll, no ads,
+no ranking deciding what you see. The order is simply newest-first, from the
+people you follow.</p>
+<p>This website is deliberately tiny and read-only: a quiet public window onto
+profiles and posts, not an engagement engine. Everything that matters —
+posting, following, reading your feed — happens in your terminal.</p>
+<p class="muted">Want in? See <a href="/join">how to join</a>. The code is open
+source at <a href="https://github.com/etdebruin/dunbar">github.com/etdebruin/dunbar</a>.</p>`,
   );
 }
 
