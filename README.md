@@ -98,6 +98,12 @@ pnpm format        # prettier --write
 - Browser device-flow login is intentionally **not** in the MVP; the CLI is the
   primary way in.
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Short version: open a PR against
+`main` — CI runs lint/typecheck/tests, and merging to `main` auto-deploys both
+apps to Fly. You don't need any cloud credentials to contribute.
+
 ## Deploy (Fly.io)
 
 Two Fly apps share one image (`Dockerfile`): `dunbar-api` (`fly.toml`) and
