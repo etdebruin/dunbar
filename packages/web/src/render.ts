@@ -41,6 +41,15 @@ const STYLE = `
   .post { border: 1px solid #e2e2dc; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
   .post .body { white-space: pre-wrap; margin: .35rem 0 0; }
   .meta, .muted { color: #8a8a92; font-size: .85rem; }
+  h2 { font-size: 1.05rem; margin: 2.25rem 0 .6rem; }
+  ol.steps { padding-left: 1.2rem; margin: .5rem 0; }
+  ol.steps li { margin: .85rem 0; }
+  pre.cmd {
+    background: #11131a; color: #e8e8ea; border-radius: 8px;
+    padding: .7rem .9rem; margin: .4rem 0 0; overflow-x: auto;
+    font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  pre.cmd .c { color: #7c8190; }
   footer { margin-top: 3rem; color: #8a8a92; font-size: .8rem; }
 `;
 
@@ -78,13 +87,32 @@ function postCard(p: Post, opts: { handle?: string } = {}): string {
 </article>`;
 }
 
-export function renderHome(): string {
+export function renderHome(apiBase: string): string {
+  const api = escapeHtml(apiBase);
   return layout(
     PRODUCT_NAME,
     `<p>${PRODUCT_NAME} is a command-line-first social network. People post, follow,
 and read their feed from the terminal. This site is just a quiet, read-only
 window onto public profiles and posts.</p>
-<p class="muted">Visit a profile at <code>/u/&lt;username&gt;</code> or a post at <code>/p/&lt;id&gt;</code>.</p>`,
+
+<h2>How to join</h2>
+<p>There's no signup form — you join from your terminal with the
+<code>dunbar</code> CLI.</p>
+<ol class="steps">
+  <li>Get the CLI (build it from the
+    <a href="https://github.com/etdebruin/dunbar">project repo</a>: <code>pnpm install</code>).</li>
+  <li>Point it at this server:
+    <pre class="cmd">export DUNBAR_API=${api}</pre></li>
+  <li>Claim your handle (3–20 chars, lowercase):
+    <pre class="cmd">dunbar auth register --username <span class="c">you</span> --name <span class="c">"Your Name"</span></pre></li>
+  <li>Start posting and following:
+    <pre class="cmd">dunbar post <span class="c">"hello, dunbar"</span>
+dunbar follow <span class="c">someone</span>
+dunbar feed</pre></li>
+</ol>
+<p class="muted">You can follow at most ${MAX_FOLLOWING} people — that's the
+whole idea. Browse public profiles at <code>/u/&lt;username&gt;</code> or a post at
+<code>/p/&lt;id&gt;</code>.</p>`,
   );
 }
 

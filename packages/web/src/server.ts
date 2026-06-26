@@ -23,7 +23,7 @@ export function createWebServer({ apiUrl }: WebOptions): Server {
   return createServer(async (req, res) => {
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     try {
-      if (path === "/") return send(res, 200, renderHome());
+      if (path === "/") return send(res, 200, renderHome(apiUrl));
 
       const profile = path.match(/^\/u\/([^/]+)\/?$/);
       if (profile?.[1]) {
