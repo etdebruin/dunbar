@@ -3,11 +3,11 @@ import type { Db } from "../db/index.js";
 import { decodeCursor, encodeCursor } from "../lib/cursor.js";
 
 interface PostRow {
-  rowid: number;
+  seq: number | string;
   id: string;
   author_id: string;
   body: string;
-  created_at: number;
+  created_at: number | string;
 }
 
 export function rowToPost(row: PostRow): Post {
@@ -15,25 +15,25 @@ export function rowToPost(row: PostRow): Post {
     id: row.id,
     authorId: row.author_id,
     body: row.body,
-    createdAt: row.created_at,
+    createdAt: Number(row.created_at),
   };
 }
 
-export function insertPost(
+export async function insertPost(
   db: Db,
   post: { id: string; authorId: string; body: string; createdAt: number },
-): Post {
-  db.prepare(
-    "INSERT INTO posts (id, author_id, body, created_at) VALUES (?, ?, ?, ?)",
-  ).run(post.id, post.authorId, post.body, post.createdAt);
-  return findPostById(db, post.id)!;
+): Promise<Post> {
+  const { rows } = await db.query(
+    `INSERT INTO posts (id, author_id, body, created_at)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [post.id, post.authorId, post.body, post.createdAt],
+  );
+  return rowToPost(rows[0] as PostRow);
 }
 
-export function findPostById(db: Db, id: string): Post | null {
-  const row = db.prepare("SELECT rowid, * FROM posts WHERE id = ?").get(id) as
-    | PostRow
-    | undefined;
-  return row ? rowToPost(row) : null;
+export async function findPostById(db: Db, id: string): Promise<Post | null> {
+  const { rows } = await db.query("SELECT * FROM posts WHERE id = $1", [id]);
+  return rows[0] ? rowToPost(rows[0] as PostRow) : null;
 }
 
 interface PostWithAuthorRow extends PostRow {
@@ -41,25 +41,10 @@ interface PostWithAuthorRow extends PostRow {
   author__username: string;
   author__display_name: string | null;
   author__bio: string | null;
-  author__created_at: number;
+  author__created_at: number | string;
 }
 
-/** A single post enriched with its author, for permalinks. */
-export function findPostWithAuthorById(
-  db: Db,
-  id: string,
-): PostWithAuthor | null {
-  const row = db
-    .prepare(
-      `SELECT p.rowid AS rowid, p.id AS id, p.author_id AS author_id,
-              p.body AS body, p.created_at AS created_at,
-              u.id AS author__id, u.username AS author__username,
-              u.display_name AS author__display_name, u.bio AS author__bio,
-              u.created_at AS author__created_at
-       FROM posts p JOIN users u ON u.id = p.author_id WHERE p.id = ?`,
-    )
-    .get(id) as PostWithAuthorRow | undefined;
-  if (!row) return null;
+function rowToPostWithAuthor(row: PostWithAuthorRow): PostWithAuthor {
   return {
     ...rowToPost(row),
     author: {
@@ -67,15 +52,32 @@ export function findPostWithAuthorById(
       username: row.author__username,
       displayName: row.author__display_name,
       bio: row.author__bio,
-      createdAt: row.author__created_at,
+      createdAt: Number(row.author__created_at),
     },
   };
 }
 
+/** A single post enriched with its author, for permalinks. */
+export async function findPostWithAuthorById(
+  db: Db,
+  id: string,
+): Promise<PostWithAuthor | null> {
+  const { rows } = await db.query(
+    `SELECT p.seq AS seq, p.id AS id, p.author_id AS author_id,
+            p.body AS body, p.created_at AS created_at,
+            u.id AS author__id, u.username AS author__username,
+            u.display_name AS author__display_name, u.bio AS author__bio,
+            u.created_at AS author__created_at
+     FROM posts p JOIN users u ON u.id = p.author_id WHERE p.id = $1`,
+    [id],
+  );
+  return rows[0] ? rowToPostWithAuthor(rows[0] as PostWithAuthorRow) : null;
+}
+
 /** Delete a post. Returns true if a row was removed. */
-export function deletePost(db: Db, id: string): boolean {
-  const info = db.prepare("DELETE FROM posts WHERE id = ?").run(id);
-  return info.changes > 0;
+export async function deletePost(db: Db, id: string): Promise<boolean> {
+  const { rowCount } = await db.query("DELETE FROM posts WHERE id = $1", [id]);
+  return (rowCount ?? 0) > 0;
 }
 
 interface PageOpts {
@@ -83,33 +85,33 @@ interface PageOpts {
   before?: string | undefined;
 }
 
-/** Reverse-chronological posts by a single author, keyset-paginated on rowid. */
-export function listPostsByAuthor(
+/** Reverse-chronological posts by a single author, keyset-paginated on seq. */
+export async function listPostsByAuthor(
   db: Db,
   authorId: string,
   { limit, before }: PageOpts,
-): Paginated<Post> {
+): Promise<Paginated<Post>> {
   const cursor = before ? decodeCursor(before) : null;
-  const rows = (cursor !== null
-    ? db
-        .prepare(
-          "SELECT rowid, * FROM posts WHERE author_id = ? AND rowid < ? ORDER BY rowid DESC LIMIT ?",
+  const { rows } =
+    cursor !== null
+      ? await db.query(
+          `SELECT * FROM posts WHERE author_id = $1 AND seq < $2
+           ORDER BY seq DESC LIMIT $3`,
+          [authorId, cursor, limit + 1],
         )
-        .all(authorId, cursor, limit + 1)
-    : db
-        .prepare(
-          "SELECT rowid, * FROM posts WHERE author_id = ? ORDER BY rowid DESC LIMIT ?",
-        )
-        .all(authorId, limit + 1)) as unknown as PostRow[];
-
-  return buildPage(rows, limit, rowToPost);
+      : await db.query(
+          `SELECT * FROM posts WHERE author_id = $1
+           ORDER BY seq DESC LIMIT $2`,
+          [authorId, limit + 1],
+        );
+  return buildPage(rows as PostRow[], limit, rowToPost);
 }
 
 /**
  * Slice over-fetched rows (limit + 1) into a page and derive the next cursor
- * from the last kept row's rowid. Generic so feeds can reuse it.
+ * from the last kept row's seq. Generic so feeds can reuse it.
  */
-export function buildPage<R extends { rowid: number }, T>(
+export function buildPage<R extends { seq: number | string }, T>(
   rows: R[],
   limit: number,
   map: (row: R) => T,
@@ -119,6 +121,6 @@ export function buildPage<R extends { rowid: number }, T>(
   const last = page.at(-1);
   return {
     items: page.map(map),
-    nextCursor: hasMore && last ? encodeCursor(last.rowid) : null,
+    nextCursor: hasMore && last ? encodeCursor(Number(last.seq)) : null,
   };
 }

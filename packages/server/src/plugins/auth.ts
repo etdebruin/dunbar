@@ -21,7 +21,7 @@ export function registerAuth(app: FastifyInstance): void {
     "requireAuth",
     async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
       const raw = bearer(req);
-      const result = raw ? verifyToken(app.db, raw) : null;
+      const result = raw ? await verifyToken(app.db, raw) : null;
       if (!result) {
         await reply.code(401).send({ error: "unauthorized" });
         return;

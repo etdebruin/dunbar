@@ -4,7 +4,7 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import { createDb, type Db } from "./db/index.js";
+import { createPool, type Db } from "./db/index.js";
 import { registerAuth } from "./plugins/auth.js";
 import { authRoutes } from "./routes/auth.js";
 import { feedRoutes } from "./routes/feed.js";
@@ -19,11 +19,12 @@ export interface BuildAppOptions {
 }
 
 /**
- * Construct a fully-wired Fastify app. Accepts an injected db so tests can run
- * against an in-memory database and use `app.inject()` without binding a port.
+ * Construct a fully-wired Fastify app. Accepts an injected (already-migrated)
+ * connection pool so tests can pass an in-memory pg-mem db and use
+ * `app.inject()` without binding a port.
  */
 export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
-  const db = opts.db ?? createDb(process.env.DUNBAR_DB ?? ":memory:");
+  const db = opts.db ?? createPool();
 
   const app = Fastify({
     logger: opts.logger ?? false,

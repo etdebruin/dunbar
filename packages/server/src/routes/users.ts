@@ -11,11 +11,15 @@ const usernameParam = z.object({
 export function userRoutes(app: FastifyInstance): void {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
-  r.get(patterns.user, { schema: { params: usernameParam } }, (req, reply) => {
-    const user = findUserByUsername(app.db, req.params.username);
-    if (!user) return reply.code(404).send({ error: "user not found" });
-    return user;
-  });
+  r.get(
+    patterns.user,
+    { schema: { params: usernameParam } },
+    async (req, reply) => {
+      const user = await findUserByUsername(app.db, req.params.username);
+      if (!user) return reply.code(404).send({ error: "user not found" });
+      return user;
+    },
+  );
 
   r.get(routes.me, { preHandler: app.requireAuth }, (req) => req.user);
 

@@ -14,25 +14,29 @@ export function authRoutes(app: FastifyInstance): void {
     async (req, reply) => {
       const { username, displayName } = req.body;
 
-      if (findUserByUsername(app.db, username)) {
+      if (await findUserByUsername(app.db, username)) {
         return reply.code(409).send({ error: "username taken" });
       }
 
-      const user = insertUser(app.db, {
+      const user = await insertUser(app.db, {
         id: randomUUID(),
         username,
         displayName: displayName ?? null,
         createdAt: Date.now(),
       });
-      const { token } = issueToken(app.db, user.id, "cli");
+      const { token } = await issueToken(app.db, user.id, "cli");
       return reply.code(201).send({ token, user });
     },
   );
 
   r.get(routes.whoami, { preHandler: app.requireAuth }, (req) => req.user);
 
-  r.post(routes.logout, { preHandler: app.requireAuth }, (req, reply) => {
-    if (req.tokenId) revokeTokenById(app.db, req.tokenId);
-    return reply.code(200).send({ ok: true });
-  });
+  r.post(
+    routes.logout,
+    { preHandler: app.requireAuth },
+    async (req, reply) => {
+      if (req.tokenId) await revokeTokenById(app.db, req.tokenId);
+      return reply.code(200).send({ ok: true });
+    },
+  );
 }

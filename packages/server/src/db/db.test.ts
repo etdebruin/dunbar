@@ -1,78 +1,78 @@
 import { describe, expect, it } from "vitest";
-import { createDb } from "./index.js";
+import { createMemoryDb } from "./memory.js";
 
-function tableNames(db: ReturnType<typeof createDb>): string[] {
-  return db
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
-    .all()
-    .map((r) => (r as { name: string }).name);
-}
-
-describe("createDb", () => {
-  it("creates all core tables", () => {
-    const db = createDb(":memory:");
-    const tables = tableNames(db);
+describe("createMemoryDb / migrate", () => {
+  it("creates all core tables", async () => {
+    const db = await createMemoryDb();
     for (const t of ["users", "auth_tokens", "posts", "follows"]) {
-      expect(tables).toContain(t);
+      // throws if the table doesn't exist
+      await expect(db.query(`SELECT * FROM ${t} LIMIT 0`)).resolves.toBeTruthy();
     }
   });
 
-  it("enables foreign key enforcement", () => {
-    const db = createDb(":memory:");
-    const row = db.prepare("PRAGMA foreign_keys").get() as {
-      foreign_keys: number;
-    };
-    expect(row.foreign_keys).toBe(1);
-  });
-
-  it("round-trips a user", () => {
-    const db = createDb(":memory:");
-    db.prepare(
-      "INSERT INTO users (id, username, display_name, bio, created_at) VALUES (?, ?, ?, ?, ?)",
-    ).run("u1", "et", "Et", null, 1700000000000);
-    const user = db
-      .prepare("SELECT * FROM users WHERE id = ?")
-      .get("u1") as Record<string, unknown>;
-    expect(user.username).toBe("et");
-    expect(user.display_name).toBe("Et");
-    expect(user.bio).toBe(null);
-  });
-
-  it("enforces unique usernames", () => {
-    const db = createDb(":memory:");
-    const insert = db.prepare(
-      "INSERT INTO users (id, username, created_at) VALUES (?, ?, ?)",
+  it("round-trips a user", async () => {
+    const db = await createMemoryDb();
+    await db.query(
+      "INSERT INTO users (id, username, display_name, bio, created_at) VALUES ($1, $2, $3, $4, $5)",
+      ["u1", "et", "Et", null, 1700000000000],
     );
-    insert.run("u1", "et", 1);
-    expect(() => insert.run("u2", "et", 2)).toThrow();
+    const { rows } = await db.query("SELECT * FROM users WHERE id = $1", ["u1"]);
+    expect(rows[0].username).toBe("et");
+    expect(rows[0].display_name).toBe("Et");
+    expect(rows[0].bio).toBe(null);
   });
 
-  it("rejects a self-follow via CHECK constraint", () => {
-    const db = createDb(":memory:");
-    db.prepare(
-      "INSERT INTO users (id, username, created_at) VALUES (?, ?, ?)",
-    ).run("u1", "et", 1);
-    expect(() =>
-      db
-        .prepare(
-          "INSERT INTO follows (follower_id, followee_id, created_at) VALUES (?, ?, ?)",
-        )
-        .run("u1", "u1", 1),
-    ).toThrow();
+  it("stores big timestamps without truncation", async () => {
+    const db = await createMemoryDb();
+    const ts = 1782427918503;
+    await db.query(
+      "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+      ["u1", "et", ts],
+    );
+    const { rows } = await db.query("SELECT created_at FROM users");
+    expect(Number(rows[0].created_at)).toBe(ts);
   });
 
-  it("cascades token deletion when a user is removed", () => {
-    const db = createDb(":memory:");
-    db.prepare(
-      "INSERT INTO users (id, username, created_at) VALUES (?, ?, ?)",
-    ).run("u1", "et", 1);
-    db.prepare(
-      "INSERT INTO auth_tokens (id, user_id, token_hash, created_at) VALUES (?, ?, ?, ?)",
-    ).run("t1", "u1", "hash", 1);
-    db.prepare("DELETE FROM users WHERE id = ?").run("u1");
-    const count = db.prepare("SELECT COUNT(*) AS n FROM auth_tokens").get() as {
-      n: number;
-    };
-    expect(count.n).toBe(0);
+  it("enforces unique usernames", async () => {
+    const db = await createMemoryDb();
+    await db.query(
+      "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+      ["u1", "et", 1],
+    );
+    await expect(
+      db.query(
+        "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+        ["u2", "et", 2],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("rejects a self-follow via CHECK constraint", async () => {
+    const db = await createMemoryDb();
+    await db.query(
+      "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+      ["u1", "et", 1],
+    );
+    await expect(
+      db.query(
+        "INSERT INTO follows (follower_id, followee_id, created_at) VALUES ($1, $2, $3)",
+        ["u1", "u1", 1],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("cascades token deletion when a user is removed", async () => {
+    const db = await createMemoryDb();
+    await db.query(
+      "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+      ["u1", "et", 1],
+    );
+    await db.query(
+      "INSERT INTO auth_tokens (id, user_id, token_hash, created_at) VALUES ($1, $2, $3, $4)",
+      ["t1", "u1", "hash", 1],
+    );
+    await db.query("DELETE FROM users WHERE id = $1", ["u1"]);
+    const { rows } = await db.query("SELECT COUNT(*) AS n FROM auth_tokens");
+    expect(Number(rows[0].n)).toBe(0);
   });
 });

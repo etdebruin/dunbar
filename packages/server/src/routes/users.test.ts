@@ -1,10 +1,10 @@
 import { routes } from "@dunbar/shared";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
-import { createDb } from "../db/index.js";
+import { createMemoryDb } from "../db/memory.js";
 
 async function setup() {
-  const app = buildApp({ db: createDb(":memory:") });
+  const app = buildApp({ db: await createMemoryDb() });
   const token = (
     await app.inject({
       method: "POST",

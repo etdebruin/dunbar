@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createDb } from "../db/index.js";
+import { createMemoryDb } from "../db/memory.js";
+import type { Db } from "../db/index.js";
 import {
   generateToken,
   hashToken,
@@ -8,10 +9,11 @@ import {
   verifyToken,
 } from "./auth.js";
 
-function seedUser(db: ReturnType<typeof createDb>, id = "u1", username = "et") {
-  db.prepare(
-    "INSERT INTO users (id, username, created_at) VALUES (?, ?, ?)",
-  ).run(id, username, 1700000000000);
+async function seedUser(db: Db, id = "u1", username = "et") {
+  await db.query(
+    "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+    [id, username, 1700000000000],
+  );
 }
 
 describe("token helpers", () => {
@@ -29,47 +31,43 @@ describe("token helpers", () => {
 });
 
 describe("issueToken / verifyToken", () => {
-  it("persists only the hash, never the raw token", () => {
-    const db = createDb(":memory:");
-    seedUser(db);
-    const { token } = issueToken(db, "u1");
-    const stored = db.prepare("SELECT token_hash FROM auth_tokens").get() as {
-      token_hash: string;
-    };
-    expect(stored.token_hash).toBe(hashToken(token));
-    expect(stored.token_hash).not.toBe(token);
+  it("persists only the hash, never the raw token", async () => {
+    const db = await createMemoryDb();
+    await seedUser(db);
+    const { token } = await issueToken(db, "u1");
+    const { rows } = await db.query("SELECT token_hash FROM auth_tokens");
+    expect(rows[0].token_hash).toBe(hashToken(token));
+    expect(rows[0].token_hash).not.toBe(token);
   });
 
-  it("verifies a valid token and returns its user", () => {
-    const db = createDb(":memory:");
-    seedUser(db);
-    const { token } = issueToken(db, "u1");
-    const result = verifyToken(db, token);
+  it("verifies a valid token and returns its user", async () => {
+    const db = await createMemoryDb();
+    await seedUser(db);
+    const { token } = await issueToken(db, "u1");
+    const result = await verifyToken(db, token);
     expect(result?.user.username).toBe("et");
     expect(result?.user.id).toBe("u1");
   });
 
-  it("returns null for an unknown token", () => {
-    const db = createDb(":memory:");
-    expect(verifyToken(db, "dunbar_pat_nope")).toBe(null);
+  it("returns null for an unknown token", async () => {
+    const db = await createMemoryDb();
+    expect(await verifyToken(db, "dunbar_pat_nope")).toBe(null);
   });
 
-  it("records last_used_at on verification", () => {
-    const db = createDb(":memory:");
-    seedUser(db);
-    const { token } = issueToken(db, "u1");
-    verifyToken(db, token);
-    const row = db.prepare("SELECT last_used_at FROM auth_tokens").get() as {
-      last_used_at: number | null;
-    };
-    expect(row.last_used_at).not.toBe(null);
+  it("records last_used_at on verification", async () => {
+    const db = await createMemoryDb();
+    await seedUser(db);
+    const { token } = await issueToken(db, "u1");
+    await verifyToken(db, token);
+    const { rows } = await db.query("SELECT last_used_at FROM auth_tokens");
+    expect(rows[0].last_used_at).not.toBe(null);
   });
 
-  it("rejects a revoked token", () => {
-    const db = createDb(":memory:");
-    seedUser(db);
-    const { token } = issueToken(db, "u1");
-    revokeToken(db, token);
-    expect(verifyToken(db, token)).toBe(null);
+  it("rejects a revoked token", async () => {
+    const db = await createMemoryDb();
+    await seedUser(db);
+    const { token } = await issueToken(db, "u1");
+    await revokeToken(db, token);
+    expect(await verifyToken(db, token)).toBe(null);
   });
 });

@@ -1,23 +1,32 @@
-import { DatabaseSync } from "node:sqlite";
+import pg from "pg";
 import { SCHEMA_SQL } from "./schema.js";
 
-/** A thin alias so callers don't import from `node:sqlite` everywhere. */
-export type Db = DatabaseSync;
+// BIGINT (oid 20) comes back as a string by default to avoid precision loss.
+// Our bigints (epoch ms, sequence ids) are well within Number's safe range,
+// so parse them to numbers globally.
+pg.types.setTypeParser(20, (v) => parseInt(v, 10));
 
-/** Apply the schema. Idempotent — safe to call on every boot. */
-export function migrate(db: Db): void {
-  db.exec(SCHEMA_SQL);
+/** A connection pool — everything the app queries through. */
+export type Db = pg.Pool;
+
+export interface PoolOptions {
+  connectionString?: string | undefined;
 }
 
-/**
- * Open a database, configure pragmas, and run migrations.
- * @param location a file path, or ":memory:" (the default) for tests.
- */
-export function createDb(location = ":memory:"): Db {
-  const db = new DatabaseSync(location);
-  // WAL improves concurrency for the file-backed case; ignored for :memory:.
-  db.exec("PRAGMA journal_mode = WAL;");
-  db.exec("PRAGMA foreign_keys = ON;");
-  migrate(db);
-  return db;
+export function createPool(opts: PoolOptions = {}): Db {
+  const connectionString = opts.connectionString ?? process.env.DATABASE_URL;
+  const ssl =
+    process.env.DATABASE_SSL === "true"
+      ? { rejectUnauthorized: false }
+      : undefined;
+  return new pg.Pool({
+    connectionString,
+    ssl,
+    max: Number(process.env.DB_POOL_MAX ?? 10),
+  });
+}
+
+/** Apply the schema. Idempotent — safe to call on every boot. */
+export async function migrate(db: Db): Promise<void> {
+  await db.query(SCHEMA_SQL);
 }

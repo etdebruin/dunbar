@@ -7,7 +7,7 @@ export interface UserRow {
   username: string;
   display_name: string | null;
   bio: string | null;
-  created_at: number;
+  created_at: number | string;
 }
 
 /** Map a DB row to the public API representation. */
@@ -17,53 +17,56 @@ export function rowToPublicUser(row: UserRow): PublicUser {
     username: row.username,
     displayName: row.display_name,
     bio: row.bio,
-    createdAt: row.created_at,
+    createdAt: Number(row.created_at),
   };
 }
 
-export function findUserById(db: Db, id: string): PublicUser | null {
-  const row = db.prepare("SELECT * FROM users WHERE id = ?").get(id) as
-    | UserRow
-    | undefined;
-  return row ? rowToPublicUser(row) : null;
+export async function findUserById(
+  db: Db,
+  id: string,
+): Promise<PublicUser | null> {
+  const { rows } = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+  return rows[0] ? rowToPublicUser(rows[0] as UserRow) : null;
 }
 
-export function findUserByUsername(
+export async function findUserByUsername(
   db: Db,
   username: string,
-): PublicUser | null {
-  const row = db
-    .prepare("SELECT * FROM users WHERE username = ?")
-    .get(username) as UserRow | undefined;
-  return row ? rowToPublicUser(row) : null;
+): Promise<PublicUser | null> {
+  const { rows } = await db.query(
+    "SELECT * FROM users WHERE username = $1",
+    [username],
+  );
+  return rows[0] ? rowToPublicUser(rows[0] as UserRow) : null;
 }
 
 /** Patch a user's profile fields. Only provided keys are written. */
-export function updateUserProfile(
+export async function updateUserProfile(
   db: Db,
   id: string,
   patch: { displayName?: string | null; bio?: string | null },
-): PublicUser | null {
+): Promise<PublicUser | null> {
   const sets: string[] = [];
   const values: (string | null)[] = [];
   if (patch.displayName !== undefined) {
-    sets.push("display_name = ?");
     values.push(patch.displayName);
+    sets.push(`display_name = $${values.length}`);
   }
   if (patch.bio !== undefined) {
-    sets.push("bio = ?");
     values.push(patch.bio);
+    sets.push(`bio = $${values.length}`);
   }
   if (sets.length > 0) {
-    db.prepare(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`).run(
-      ...values,
-      id,
+    values.push(id);
+    await db.query(
+      `UPDATE users SET ${sets.join(", ")} WHERE id = $${values.length}`,
+      values,
     );
   }
   return findUserById(db, id);
 }
 
-export function insertUser(
+export async function insertUser(
   db: Db,
   user: {
     id: string;
@@ -71,9 +74,11 @@ export function insertUser(
     displayName?: string | null;
     createdAt: number;
   },
-): PublicUser {
-  db.prepare(
-    "INSERT INTO users (id, username, display_name, bio, created_at) VALUES (?, ?, ?, ?, ?)",
-  ).run(user.id, user.username, user.displayName ?? null, null, user.createdAt);
-  return findUserById(db, user.id)!;
+): Promise<PublicUser> {
+  const { rows } = await db.query(
+    `INSERT INTO users (id, username, display_name, bio, created_at)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [user.id, user.username, user.displayName ?? null, null, user.createdAt],
+  );
+  return rowToPublicUser(rows[0] as UserRow);
 }

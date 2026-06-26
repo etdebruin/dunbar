@@ -1,13 +1,13 @@
 import { routes } from "@dunbar/shared";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
-import { createDb } from "../db/index.js";
+import { createMemoryDb } from "../db/memory.js";
 
-function app() {
-  return buildApp({ db: createDb(":memory:") });
+async function app() {
+  return buildApp({ db: await createMemoryDb() });
 }
 
-async function register(a: ReturnType<typeof app>, username: string) {
+async function register(a: Awaited<ReturnType<typeof app>>, username: string) {
   return a.inject({
     method: "POST",
     url: routes.register,
@@ -17,7 +17,7 @@ async function register(a: ReturnType<typeof app>, username: string) {
 
 describe("POST /v1/auth/register", () => {
   it("creates a user and returns a token", async () => {
-    const a = app();
+    const a = await app();
     const res = await register(a, "alice");
     expect(res.statusCode).toBe(201);
     const body = res.json();
@@ -27,14 +27,14 @@ describe("POST /v1/auth/register", () => {
   });
 
   it("409s on a taken username", async () => {
-    const a = app();
+    const a = await app();
     await register(a, "alice");
     const res = await register(a, "alice");
     expect(res.statusCode).toBe(409);
   });
 
   it("normalizes case so ALICE collides with alice", async () => {
-    const a = app();
+    const a = await app();
     await register(a, "alice");
     const res = await a.inject({
       method: "POST",
@@ -45,7 +45,7 @@ describe("POST /v1/auth/register", () => {
   });
 
   it("400s on an invalid username", async () => {
-    const a = app();
+    const a = await app();
     const res = await a.inject({
       method: "POST",
       url: routes.register,
@@ -57,7 +57,7 @@ describe("POST /v1/auth/register", () => {
 
 describe("GET /v1/auth/whoami", () => {
   it("returns the current user with a valid token", async () => {
-    const a = app();
+    const a = await app();
     const token = (await register(a, "alice")).json().token;
     const res = await a.inject({
       method: "GET",
@@ -69,14 +69,17 @@ describe("GET /v1/auth/whoami", () => {
   });
 
   it("401s without a token", async () => {
-    const res = await app().inject({ method: "GET", url: routes.whoami });
+    const res = await (await app()).inject({
+      method: "GET",
+      url: routes.whoami,
+    });
     expect(res.statusCode).toBe(401);
   });
 });
 
 describe("POST /v1/auth/logout", () => {
   it("revokes the current token", async () => {
-    const a = app();
+    const a = await app();
     const token = (await register(a, "alice")).json().token;
     const auth = { authorization: `Bearer ${token}` };
 

@@ -1,10 +1,10 @@
 import { MAX_FOLLOWING, routes } from "@dunbar/shared";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
-import { createDb } from "../db/index.js";
+import { createMemoryDb } from "../db/memory.js";
 
 async function setup() {
-  const db = createDb(":memory:");
+  const db = await createMemoryDb();
   const app = buildApp({ db });
   const reg = async (username: string) =>
     (
@@ -77,12 +77,14 @@ describe("POST /v1/follows", () => {
     const alice = await reg("alice");
     // Seed MAX_FOLLOWING follow edges directly.
     for (let i = 0; i < MAX_FOLLOWING; i++) {
-      db.prepare(
-        "INSERT INTO users (id, username, created_at) VALUES (?, ?, ?)",
-      ).run(`t${i}`, `target_${i}`, 1);
-      db.prepare(
-        "INSERT INTO follows (follower_id, followee_id, created_at) VALUES (?, ?, ?)",
-      ).run(alice.user.id, `t${i}`, 1);
+      await db.query(
+        "INSERT INTO users (id, username, created_at) VALUES ($1, $2, $3)",
+        [`t${i}`, `target_${i}`, 1],
+      );
+      await db.query(
+        "INSERT INTO follows (follower_id, followee_id, created_at) VALUES ($1, $2, $3)",
+        [alice.user.id, `t${i}`, 1],
+      );
     }
     await reg("onemore");
     expect((await follow(app, alice.token, "onemore")).statusCode).toBe(422);

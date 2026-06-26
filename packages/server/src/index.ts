@@ -1,22 +1,18 @@
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
 import { buildApp } from "./app.js";
-import { createDb } from "./db/index.js";
+import { createPool, migrate } from "./db/index.js";
 
 const port = Number(process.env.PORT ?? 3000);
-const host = process.env.HOST ?? "127.0.0.1";
-const dbLocation = process.env.DUNBAR_DB ?? "data/dunbar.db";
+const host = process.env.HOST ?? "0.0.0.0";
 
-if (dbLocation !== ":memory:") {
-  mkdirSync(dirname(dbLocation), { recursive: true });
+const db = createPool();
+await migrate(db);
+
+const app = buildApp({ db, logger: true });
+
+try {
+  const address = await app.listen({ port, host });
+  app.log.info(`dunbar API listening on ${address}`);
+} catch (err) {
+  app.log.error(err);
+  process.exit(1);
 }
-
-const app = buildApp({ db: createDb(dbLocation), logger: true });
-
-app
-  .listen({ port, host })
-  .then((address) => app.log.info(`dunbar API listening on ${address}`))
-  .catch((err) => {
-    app.log.error(err);
-    process.exit(1);
-  });

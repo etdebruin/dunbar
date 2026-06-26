@@ -1,5 +1,5 @@
 import { buildApp } from "@dunbar/server/app";
-import { createDb } from "@dunbar/server/db";
+import { createMemoryDb } from "@dunbar/server/db/memory";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ApiError, createClient } from "./api-client.js";
 
@@ -7,7 +7,7 @@ let app: ReturnType<typeof buildApp>;
 let apiUrl: string;
 
 beforeEach(async () => {
-  app = buildApp({ db: createDb(":memory:") });
+  app = buildApp({ db: await createMemoryDb() });
   await app.listen({ port: 0, host: "127.0.0.1" });
   const addr = app.server.address();
   const port = typeof addr === "object" && addr ? addr.port : 0;

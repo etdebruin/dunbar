@@ -1,6 +1,6 @@
 import type { AddressInfo } from "node:net";
 import { buildApp } from "@dunbar/server/app";
-import { createDb } from "@dunbar/server/db";
+import { createMemoryDb } from "@dunbar/server/db/memory";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createWebServer } from "./server.js";
 
@@ -11,7 +11,7 @@ let aliceToken: string;
 let postId: string;
 
 beforeEach(async () => {
-  api = buildApp({ db: createDb(":memory:") });
+  api = buildApp({ db: await createMemoryDb() });
   await api.listen({ port: 0, host: "127.0.0.1" });
   const apiAddr = api.server.address() as AddressInfo;
   const apiUrl = `http://127.0.0.1:${apiAddr.port}`;

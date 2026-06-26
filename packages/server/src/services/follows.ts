@@ -9,8 +9,11 @@ import {
 } from "../repos/follows.js";
 
 /** Whether a user is below the Dunbar following cap. */
-export function canFollowMore(db: Db, followerId: string): boolean {
-  return countFollowing(db, followerId) < MAX_FOLLOWING;
+export async function canFollowMore(
+  db: Db,
+  followerId: string,
+): Promise<boolean> {
+  return (await countFollowing(db, followerId)) < MAX_FOLLOWING;
 }
 
 export type FollowOutcome =
@@ -21,30 +24,30 @@ export type FollowOutcome =
   | "limit";
 
 /** Follow a user by handle, enforcing self/duplicate/limit rules in one place. */
-export function followUser(
+export async function followUser(
   db: Db,
   followerId: string,
   targetUsername: string,
-): FollowOutcome {
-  const target = findUserByUsername(db, targetUsername);
+): Promise<FollowOutcome> {
+  const target = await findUserByUsername(db, targetUsername);
   if (!target) return "not_found";
   if (target.id === followerId) return "self";
-  if (isFollowing(db, followerId, target.id)) return "already";
-  if (!canFollowMore(db, followerId)) return "limit";
-  insertFollow(db, followerId, target.id, Date.now());
+  if (await isFollowing(db, followerId, target.id)) return "already";
+  if (!(await canFollowMore(db, followerId))) return "limit";
+  await insertFollow(db, followerId, target.id, Date.now());
   return "followed";
 }
 
 export type UnfollowOutcome = "unfollowed" | "not_following" | "not_found";
 
-export function unfollowUser(
+export async function unfollowUser(
   db: Db,
   followerId: string,
   targetUsername: string,
-): UnfollowOutcome {
-  const target = findUserByUsername(db, targetUsername);
+): Promise<UnfollowOutcome> {
+  const target = await findUserByUsername(db, targetUsername);
   if (!target) return "not_found";
-  return deleteFollow(db, followerId, target.id)
+  return (await deleteFollow(db, followerId, target.id))
     ? "unfollowed"
     : "not_following";
 }
