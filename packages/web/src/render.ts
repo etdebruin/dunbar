@@ -91,17 +91,23 @@ function postCard(p: Post, opts: { handle?: string } = {}): string {
 </article>`;
 }
 
-export function renderHome(): string {
+export function renderHome(recent: PostWithAuthor[]): string {
+  const intro = `<p>${PRODUCT_NAME} is a command-line-first social network. People post,
+follow, and read their feed from the terminal. There's no signup form — you
+join from your terminal. <a href="/join">How to join &rarr;</a></p>`;
+
+  const feed =
+    recent.length === 0
+      ? `<p class="muted">No posts yet. Be the first — <a href="/join">join</a>.</p>`
+      : recent
+          .map((p) => postCard(p, { handle: p.author.username }))
+          .join("\n");
+
   return layout(
     PRODUCT_NAME,
-    `<p>${PRODUCT_NAME} is a command-line-first social network. People post, follow,
-and read their feed from the terminal. This site is just a quiet, read-only
-window onto public profiles and posts.</p>
-<p>There's no signup form — you join from your terminal.
-<a href="/join">How to join &rarr;</a></p>
-<p class="muted">Or read <a href="/about">why ${PRODUCT_NAME} works this way</a>.
-Browse public profiles at <code>/u/&lt;username&gt;</code> or a post at
-<code>/p/&lt;id&gt;</code>.</p>`,
+    `${intro}
+<h2>Latest</h2>
+${feed}`,
   );
 }
 

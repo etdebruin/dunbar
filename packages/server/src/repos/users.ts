@@ -65,6 +65,11 @@ export async function updateUserProfile(
   return findUserById(db, id);
 }
 
+/** Delete a user and everything they own (posts, tokens, follows cascade). */
+export async function deleteUser(db: Db, id: string): Promise<void> {
+  await db.query("DELETE FROM users WHERE id = $1", [id]);
+}
+
 export async function insertUser(
   db: Db,
   user: {

@@ -116,6 +116,21 @@ describe("profile", () => {
   });
 });
 
+describe("account delete", () => {
+  it("refuses without --yes, then deletes with --yes", async () => {
+    await register("alice");
+    const refused = await run(["account", "delete"]);
+    expect(refused.code).toBe(1);
+    expect(refused.stderr).toContain("--yes");
+
+    const done = await run(["account", "delete", "--yes"]);
+    expect(done.code).toBe(0);
+
+    const who = await run(["whoami"]);
+    expect(who.code).toBe(1); // token cleared locally
+  });
+});
+
 describe("following list", () => {
   it("lists who you follow", async () => {
     await register("carol");

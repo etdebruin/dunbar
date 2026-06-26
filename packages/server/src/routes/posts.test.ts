@@ -53,6 +53,34 @@ describe("POST /v1/posts", () => {
   });
 });
 
+describe("GET /v1/posts (public timeline)", () => {
+  it("returns newest posts across all users with authors", async () => {
+    const { app, reg } = await setup();
+    const alice = await reg("alice");
+    const bob = await reg("bob");
+    await post(app, alice, "from alice");
+    await post(app, bob, "from bob");
+
+    const res = await app.inject({ method: "GET", url: routes.posts });
+    expect(res.statusCode).toBe(200);
+    const items = res.json().items;
+    expect(items.map((p: any) => p.body)).toEqual(["from bob", "from alice"]);
+    expect(items[0].author.username).toBe("bob");
+  });
+
+  it("is public (no auth required) and paginates", async () => {
+    const { app, reg } = await setup();
+    const alice = await reg("alice");
+    for (const b of ["1", "2", "3"]) await post(app, alice, b);
+    const page1 = await app.inject({
+      method: "GET",
+      url: `${routes.posts}?limit=2`,
+    });
+    expect(page1.json().items.map((p: any) => p.body)).toEqual(["3", "2"]);
+    expect(page1.json().nextCursor).toBeTruthy();
+  });
+});
+
 describe("GET /v1/posts/:id", () => {
   it("returns a post publicly", async () => {
     const { app, reg } = await setup();

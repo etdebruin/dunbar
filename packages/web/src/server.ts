@@ -25,7 +25,10 @@ export function createWebServer({ apiUrl }: WebOptions): Server {
   return createServer(async (req, res) => {
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     try {
-      if (path === "/") return send(res, 200, renderHome());
+      if (path === "/") {
+        const recent = await api.getRecent();
+        return send(res, 200, renderHome(recent?.items ?? []));
+      }
       if (path === "/join") return send(res, 200, renderJoin(apiUrl));
       if (path === "/about") return send(res, 200, renderAbout());
 

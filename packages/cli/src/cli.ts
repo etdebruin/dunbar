@@ -1,5 +1,6 @@
 import { PRODUCT_NAME } from "@dunbar/shared";
 import { Builtins, Cli } from "clipanion";
+import { AccountDeleteCommand } from "./commands/account.js";
 import {
   LogoutCommand,
   RegisterCommand,
@@ -34,6 +35,7 @@ export function buildCli(): Cli {
   cli.register(FeedCommand);
   cli.register(ProfileCommand);
   cli.register(ProfileEditCommand);
+  cli.register(AccountDeleteCommand);
 
   cli.register(Builtins.HelpCommand);
   cli.register(Builtins.VersionCommand);

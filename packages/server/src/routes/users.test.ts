@@ -56,6 +56,34 @@ describe("GET /v1/me", () => {
   });
 });
 
+describe("DELETE /v1/me", () => {
+  it("deletes the account and invalidates its token", async () => {
+    const { app, auth } = await setup();
+    const del = await app.inject({
+      method: "DELETE",
+      url: routes.me,
+      headers: auth,
+    });
+    expect(del.statusCode).toBe(200);
+    expect(del.json()).toEqual({ deleted: true });
+
+    const who = await app.inject({
+      method: "GET",
+      url: routes.me,
+      headers: auth,
+    });
+    expect(who.statusCode).toBe(401);
+    const prof = await app.inject({ method: "GET", url: routes.user("alice") });
+    expect(prof.statusCode).toBe(404);
+  });
+
+  it("401s without auth", async () => {
+    const { app } = await setup();
+    const res = await app.inject({ method: "DELETE", url: routes.me });
+    expect(res.statusCode).toBe(401);
+  });
+});
+
 describe("PATCH /v1/me", () => {
   it("updates the bio and reflects it on the public profile", async () => {
     const { app, auth } = await setup();

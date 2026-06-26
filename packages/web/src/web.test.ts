@@ -42,11 +42,13 @@ afterEach(async () => {
 });
 
 describe("website", () => {
-  it("serves the landing page", async () => {
+  it("serves the landing page with a public feed", async () => {
     const res = await fetch(`${webUrl}/`);
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain("command-line-first");
+    expect(html).toContain("Latest");
+    expect(html).toContain("hello from the web test"); // seeded post in the feed
   });
 
   it("serves a join page with the CLI flow and API URL", async () => {

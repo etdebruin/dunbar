@@ -74,6 +74,28 @@ export async function findPostWithAuthorById(
   return rows[0] ? rowToPostWithAuthor(rows[0] as PostWithAuthorRow) : null;
 }
 
+/** Newest posts across the whole network (public timeline), keyset on seq. */
+export async function listRecentPosts(
+  db: Db,
+  { limit, before }: { limit: number; before?: string | undefined },
+): Promise<Paginated<PostWithAuthor>> {
+  const sel = `SELECT p.seq AS seq, p.id AS id, p.author_id AS author_id,
+       p.body AS body, p.created_at AS created_at,
+       u.id AS author__id, u.username AS author__username,
+       u.display_name AS author__display_name, u.bio AS author__bio,
+       u.created_at AS author__created_at
+     FROM posts p JOIN users u ON u.id = p.author_id`;
+  const cursor = before ? decodeCursor(before) : null;
+  const { rows } =
+    cursor !== null
+      ? await db.query(`${sel} WHERE p.seq < $1 ORDER BY p.seq DESC LIMIT $2`, [
+          cursor,
+          limit + 1,
+        ])
+      : await db.query(`${sel} ORDER BY p.seq DESC LIMIT $1`, [limit + 1]);
+  return buildPage(rows as PostWithAuthorRow[], limit, rowToPostWithAuthor);
+}
+
 /** Delete a post. Returns true if a row was removed. */
 export async function deletePost(db: Db, id: string): Promise<boolean> {
   const { rowCount } = await db.query("DELETE FROM posts WHERE id = $1", [id]);

@@ -16,6 +16,7 @@ export function createWebApi(apiUrl: string) {
   }
 
   return {
+    getRecent: () => get<Paginated<PostWithAuthor>>(`${routes.posts}?limit=20`),
     getUser: (username: string) => get<PublicUser>(routes.user(username)),
     getUserPosts: (username: string) =>
       get<Paginated<Post>>(`${routes.userPosts(username)}?limit=20`),

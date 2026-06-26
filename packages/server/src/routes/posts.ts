@@ -15,6 +15,7 @@ import {
   findPostWithAuthorById,
   insertPost,
   listPostsByAuthor,
+  listRecentPosts,
 } from "../repos/posts.js";
 
 const idParam = z.object({ id: z.string() });
@@ -35,6 +36,17 @@ export function postRoutes(app: FastifyInstance): void {
       });
       return reply.code(201).send(post);
     },
+  );
+
+  // Public timeline: newest posts across the whole network.
+  r.get(
+    routes.posts,
+    { schema: { querystring: paginationQuerySchema } },
+    (req) =>
+      listRecentPosts(app.db, {
+        limit: req.query.limit,
+        before: req.query.before,
+      }),
   );
 
   r.get(patterns.post, { schema: { params: idParam } }, async (req, reply) => {

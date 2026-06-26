@@ -78,6 +78,7 @@ export function createClient({ apiUrl, token }: ClientOptions) {
       request<PublicUser>("GET", routes.user(username)),
     updateProfile: (patch: UpdateProfileRequest) =>
       request<PublicUser>("PATCH", routes.me, patch),
+    deleteAccount: () => request<{ deleted: true }>("DELETE", routes.me),
 
     createPost: (body: string) => request<Post>("POST", routes.posts, { body }),
     deletePost: (id: string) =>

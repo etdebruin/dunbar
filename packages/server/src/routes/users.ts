@@ -2,7 +2,11 @@ import { patterns, routes, updateProfileSchema } from "@dunbar/shared";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { findUserByUsername, updateUserProfile } from "../repos/users.js";
+import {
+  deleteUser,
+  findUserByUsername,
+  updateUserProfile,
+} from "../repos/users.js";
 
 const usernameParam = z.object({
   username: z.string().trim().toLowerCase(),
@@ -28,4 +32,10 @@ export function userRoutes(app: FastifyInstance): void {
     { preHandler: app.requireAuth, schema: { body: updateProfileSchema } },
     (req) => updateUserProfile(app.db, req.user!.id, req.body),
   );
+
+  // Delete your account: cascades posts, tokens, and follow edges.
+  r.delete(routes.me, { preHandler: app.requireAuth }, async (req, reply) => {
+    await deleteUser(app.db, req.user!.id);
+    return reply.code(200).send({ deleted: true });
+  });
 }
