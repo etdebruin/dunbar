@@ -129,8 +129,10 @@ Then CLI users point at `https://dunbar-api.fly.dev` and the site lives at
 ### CI/CD
 
 `.github/workflows/ci-cd.yml` runs lint + typecheck + tests on every push/PR,
-and deploys both apps to Fly on pushes to `main`. Give it a deploy token once:
+and deploys both apps to Fly on pushes to `main`. Deploy stays **skipped**
+until you opt in. One-time setup:
 
 ```sh
 fly tokens create deploy -x 999999h | gh secret set FLY_API_TOKEN
+gh variable set DEPLOY_ENABLED --body true
 ```

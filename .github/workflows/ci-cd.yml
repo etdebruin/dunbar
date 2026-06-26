@@ -29,7 +29,8 @@ jobs:
   deploy:
     name: Deploy to Fly
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Stays skipped (not failed) until you opt in: gh variable set DEPLOY_ENABLED --body true
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: fly-deploy
