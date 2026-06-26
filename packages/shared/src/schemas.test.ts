@@ -17,16 +17,19 @@ describe("usernameSchema", () => {
     expect(usernameSchema.parse("  Etienne_99  ")).toBe("etienne_99");
   });
 
-  it.each(["ab", "a".repeat(21), "has space", "no-dash", "café", ""])(
+  it.each(["a", "a".repeat(21), "has space", "no-dash", "café", ""])(
     "rejects %j",
     (bad) => {
       expect(usernameSchema.safeParse(bad).success).toBe(false);
     },
   );
 
-  it.each(["abc", "a_b_c", "user123", "a".repeat(20)])("accepts %j", (ok) => {
-    expect(usernameSchema.safeParse(ok).success).toBe(true);
-  });
+  it.each(["et", "ab", "abc", "a_b_c", "user123", "a".repeat(20)])(
+    "accepts %j",
+    (ok) => {
+      expect(usernameSchema.safeParse(ok).success).toBe(true);
+    },
+  );
 });
 
 describe("postBodySchema", () => {

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // ── Primitives ──────────────────────────────────────────────────────────────
 
-/** A handle: 3–20 chars of lowercase letters, digits, underscore. */
-export const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+/** A handle: 2–20 chars of lowercase letters, digits, underscore. */
+export const USERNAME_RE = /^[a-z0-9_]{2,20}$/;
 
 /** Validates and normalizes a username (trims + lowercases, then checks shape). */
 export const usernameSchema = z

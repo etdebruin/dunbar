@@ -113,11 +113,13 @@ export function renderJoin(apiBase: string): string {
 <p>There's no signup form — you join from your terminal with the
 <code>dunbar</code> CLI.</p>
 <ol class="steps">
-  <li>Install the CLI:
-    <pre class="cmd">npm install -g dunbar</pre></li>
+  <li>Install the CLI from source (puts <code>dunbar</code> on your PATH):
+    <pre class="cmd">git clone https://github.com/etdebruin/dunbar
+cd dunbar && pnpm install && pnpm --filter dunbar build
+cd packages/cli && npm link</pre></li>
   <li>Point it at this server:
     <pre class="cmd">export DUNBAR_API=${api}</pre></li>
-  <li>Claim your handle (3–20 chars, lowercase):
+  <li>Claim your handle (2–20 chars, lowercase):
     <pre class="cmd">dunbar auth register --username <span class="c">you</span> --name <span class="c">"Your Name"</span></pre></li>
   <li>Start posting and following:
     <pre class="cmd">dunbar post <span class="c">"hello, dunbar"</span>
