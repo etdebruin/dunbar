@@ -7,12 +7,12 @@ primary_region = "iad"
 
 [env]
   PORT = "8080"
-  # DATABASE_URL is set by `fly postgres attach` (a secret).
-  # Set DATABASE_SSL=true via `fly secrets` if your Postgres requires TLS.
+  # DATABASE_URL + DATABASE_SSL are set via `fly secrets`.
 
-[deploy]
-  # Apply migrations once, with the new code, before traffic shifts.
-  release_command = "node /app/server.js migrate"
+# Note: the server applies the (idempotent) schema on boot, so no
+# release_command is needed. A separate release machine is also the flakiest
+# part of a Fly deploy; skipping it keeps deploys deterministic. If migrations
+# ever become non-idempotent/ordered, reintroduce a release_command.
 
 [processes]
   app = "node /app/server.js"
